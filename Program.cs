@@ -109,7 +109,7 @@ app.MapPost("/api/orders", async (CreateOrderRequest? request, AppStore store) =
             customer.Name!.Trim(), customer.Email!.Trim(), customer.Phone!.Trim(), request.Fulfillment!,
             request.Fulfillment == "delivery" ? customer.Address!.Trim() : null, customer.Notes?.Trim(),
             lines, priced.Subtotal, priced.DeliveryFee, priced.Total, null, request.RestaurantId!, restaurants[request.RestaurantId!].Name,
-            priced.Discount, priced.Tip, priced.PromoCode, DateTimeOffset.UtcNow.AddMinutes(priced.PrepMinutes), request.ClientRequestId);
+            priced.Discount, priced.Tip, priced.PromoCode, DateTimeOffset.UtcNow.AddMinutes(priced.PrepMinutes), request.ClientRequestId, [new("Placed", DateTimeOffset.UtcNow)]);
         state.Orders.Add(order);
         return Results.Created($"/api/orders/{order.Id}", order);
     });
@@ -144,7 +144,7 @@ app.MapPost("/api/orders/{id}/cancel", async (string id, CancelOrderInput? input
         var order = state.Orders[index];
         if (order.Status is not ("Placed" or "Preparing"))
             return Results.Conflict(new { error = "This order can no longer be cancelled online. Please contact the restaurant." });
-        var updated = order with { Status = "Cancelled", CourierLocation = null };
+        var updated = order with { Status = "Cancelled", CourierLocation = null, StatusHistory = [.. order.StatusHistory ?? [], new("Cancelled", DateTimeOffset.UtcNow)] };
         state.Orders[index] = updated;
         return Results.Ok(updated);
     });
@@ -178,6 +178,8 @@ staff.AddEndpointFilter(async (context, next) =>
     return await next(context);
 });
 
+FeatureEndpoints.Map(app, staff);
+
 staff.MapGet("/session", (HttpContext context) => Results.Ok(new { authenticated = true, csrf = context.User.FindFirstValue("csrf") }));
 staff.MapPost("/logout", async (HttpContext context) => { await context.SignOutAsync(); return Results.Ok(); });
 staff.MapPost("/password", async (PasswordChange? input, AdminCredentials secrets, HttpContext context) =>
@@ -199,7 +201,7 @@ staff.MapPatch("/orders/{id}/status", async (string id, StatusInput? input, AppS
         if (index < 0) return Results.NotFound(new { error = "Order not found." });
         var order = state.Orders[index];
         if (!Rules.CanTransition(order, input.Status)) return Results.Conflict(new { error = "This status change is not allowed." });
-        var updated = order with { Status = input.Status, CourierLocation = input.Status is "Completed" or "Cancelled" ? null : order.CourierLocation };
+        var updated = order with { Status = input.Status, StatusHistory = [.. order.StatusHistory ?? [], new(input.Status, DateTimeOffset.UtcNow)], CourierLocation = input.Status is "Completed" or "Cancelled" ? null : order.CourierLocation };
         state.Orders[index] = updated;
         return Results.Ok(updated);
     });

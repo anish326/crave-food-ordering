@@ -100,3 +100,11 @@ Tracking is available on the order confirmation and on placed orders in My order
 
 See DEPLOYMENT.md for the Vercel container, private cloud storage, required environment variables, and GitHub deployment flow.
 
+
+## Customer experience and insights
+
+- Customers can publish one 1–5 star restaurant review per completed order using its confirmation code and checkout email. Public reviews show a first name, rating, comment and date; order IDs and contact details are kept out of public responses.
+- Tracking includes five preparation/delivery steps, recorded transition times, and a preparation countdown. Existing orders retain their original data and show timestamps where available.
+- The Updates inbox and toast alerts poll recent active orders every 30 seconds while the page is visible. Tracking refreshes every 15 seconds while open. Notifications are in-app and do not send email, SMS, or background browser push.
+- Same-restaurant cart suggestions favor complementary sides, drinks and desserts. Completed-order quantities determine popularity, with kitchen favorites for new restaurants.
+- Staff Analytics includes daily (7 days) and weekly (8 weeks) order counts, status breakdown, popular dishes, restaurant sales and filters. Food sales include completed orders after discounts and exclude tips and delivery fees. Dates use Asia/Kolkata; weeks start Monday.

@@ -70,7 +70,7 @@ public sealed class AppStore
                 }
                 throw new IOException("Order storage is busy. Please retry your request.");
             }
-            var working = new AppState { Menu = [.. _state.Menu], Orders = [.. _state.Orders], Restaurants = [.. _state.Restaurants] };
+            var working = new AppState { Menu = [.. _state.Menu], Orders = [.. _state.Orders], Restaurants = [.. _state.Restaurants], Reviews = [.. _state.Reviews] };
             var localResult = write(working);
             var temp = _path + ".tmp";
             await File.WriteAllTextAsync(temp, JsonSerializer.Serialize(working, _json));

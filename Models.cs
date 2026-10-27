@@ -9,7 +9,7 @@ public record QuoteRequest(string? RestaurantId, string? Fulfillment, List<Order
 public record OrderQuote(decimal Subtotal, decimal DeliveryFee, decimal Discount, decimal Tip, decimal Total, string? PromoCode, int PrepMinutes);
 public record OrderLine(string Id, string Name, decimal UnitPrice, int Quantity);
 public record CourierLocation(double Latitude, double Longitude, DateTimeOffset UpdatedAt);
-public record Order(string Id, DateTimeOffset PlacedAt, string Status, string CustomerName, string Email, string Phone, string Fulfillment, string? Address, string? Notes, List<OrderLine> Items, decimal Subtotal, decimal DeliveryFee, decimal Total, CourierLocation? CourierLocation = null, string RestaurantId = "fork-flame", string? RestaurantName = null, decimal Discount = 0m, decimal Tip = 0m, string? PromoCode = null, DateTimeOffset? EstimatedReadyAt = null, string? ClientRequestId = null);
+public record Order(string Id, DateTimeOffset PlacedAt, string Status, string CustomerName, string Email, string Phone, string Fulfillment, string? Address, string? Notes, List<OrderLine> Items, decimal Subtotal, decimal DeliveryFee, decimal Total, CourierLocation? CourierLocation = null, string RestaurantId = "fork-flame", string? RestaurantName = null, decimal Discount = 0m, decimal Tip = 0m, string? PromoCode = null, DateTimeOffset? EstimatedReadyAt = null, string? ClientRequestId = null, List<OrderStatusEvent>? StatusHistory = null);
 public record StatusInput(string? Status);
 public record CancelOrderInput(string? Email);
 public record CourierLocationInput(double Latitude, double Longitude);
@@ -20,6 +20,7 @@ public sealed class AppState
 {
     public List<MenuItem> Menu { get; set; } = [];
     public List<Order> Orders { get; set; } = [];
+    public List<RestaurantReview> Reviews { get; set; } = [];
     public List<Restaurant> Restaurants { get; set; } = [];
 }
 
