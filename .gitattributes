@@ -1,0 +1,7 @@
+* text=auto
+*.cs text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+Dockerfile.vercel text eol=lf

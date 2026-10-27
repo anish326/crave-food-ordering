@@ -1,0 +1,10 @@
+bin/
+obj/
+App_Data/
+.env
+.env.*
+!.env.example
+.vercel/
+node_modules/
+*.pfx
+*.key

@@ -1,0 +1,8 @@
+.git
+bin
+obj
+App_Data
+.env*
+.vercel
+node_modules
+*.zip
