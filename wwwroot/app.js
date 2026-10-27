@@ -62,7 +62,7 @@ function renderRestaurants() {
   if (experience.sort === 'price') restaurants.sort((a,b) => averagePrice(a) - averagePrice(b));
   if (experience.sort === 'name') restaurants.sort((a,b) => a.name.localeCompare(b.name));
   $('#restaurant-count').textContent = `${restaurants.length} ${restaurants.length === 1 ? 'KITCHEN' : 'KITCHENS'} TO EXPLORE`;
-  $('#restaurant-grid').innerHTML = restaurants.length ? restaurants.map((restaurant, index) => `<article class="restaurant-card ${escapeHtml(restaurant.accent)} ${restaurant.id === state.selectedRestaurantId ? 'selected' : ''}"><a class="restaurant-open" href="${restaurantUrl(restaurant.id)}" data-select-restaurant="${escapeHtml(restaurant.id)}"><div class="restaurant-photo ${escapeHtml(restaurant.imageKey)}"><span class="photo-number">0${index + 1} / DISCOVER</span><span class="restaurant-arrow">↗</span></div><div class="restaurant-card-body"><span class="restaurant-cuisine">${escapeHtml(restaurant.cuisine)}</span><h3>${escapeHtml(restaurant.name)}</h3><p>${escapeHtml(restaurant.tagline)}</p><div class="restaurant-meta"><span>◷ &nbsp; About ${restaurant.prepMinutes} min prep</span><strong>VIEW MENU ↗</strong></div><div class="restaurant-metrics">${Number.isFinite(averagePrice(restaurant)) ? `${money(averagePrice(restaurant))} average dish · ` : ''}${experience.mode === 'pickup' ? 'Free pickup' : '$3.99 delivery · free at $30'}</div></div></a><button type="button" class="favorite-button ${experience.favorites.includes(restaurant.id) ? 'saved' : ''}" data-favorite="${escapeHtml(restaurant.id)}" aria-pressed="${experience.favorites.includes(restaurant.id)}" aria-label="${experience.favorites.includes(restaurant.id) ? 'Unsave' : 'Save'} ${escapeHtml(restaurant.name)}">${experience.favorites.includes(restaurant.id) ? '♥' : '♡'}</button></article>`).join('') : '<p class="no-restaurants">No kitchens match these filters. Try another search or turn off Saved kitchens.</p>';
+  $('#restaurant-grid').innerHTML = restaurants.length ? restaurants.map((restaurant, index) => `<article class="restaurant-card ${escapeHtml(restaurant.accent)} ${restaurant.id === state.selectedRestaurantId ? 'selected' : ''}"><a class="restaurant-open" href="${restaurantUrl(restaurant.id)}" data-select-restaurant="${escapeHtml(restaurant.id)}"><div class="restaurant-photo ${escapeHtml(restaurant.imageKey)}"><span class="photo-number">0${index + 1} / DISCOVER</span><span class="restaurant-arrow">↗</span></div><div class="restaurant-card-body"><span class="restaurant-cuisine">${escapeHtml(restaurant.cuisine)}</span><h3>${escapeHtml(restaurant.name)}</h3>${ratingMarkup(restaurant.id)}<p>${escapeHtml(restaurant.tagline)}</p><div class="restaurant-meta"><span>◷ &nbsp; About ${restaurant.prepMinutes} min prep</span><strong>VIEW MENU ↗</strong></div><div class="restaurant-metrics">${Number.isFinite(averagePrice(restaurant)) ? `${money(averagePrice(restaurant))} average dish · ` : ''}${experience.mode === 'pickup' ? 'Free pickup' : '$3.99 delivery · free at $30'}</div></div></a><button type="button" class="favorite-button ${experience.favorites.includes(restaurant.id) ? 'saved' : ''}" data-favorite="${escapeHtml(restaurant.id)}" aria-pressed="${experience.favorites.includes(restaurant.id)}" aria-label="${experience.favorites.includes(restaurant.id) ? 'Unsave' : 'Save'} ${escapeHtml(restaurant.name)}">${experience.favorites.includes(restaurant.id) ? '♥' : '♡'}</button></article>`).join('') : '<p class="no-restaurants">No kitchens match these filters. Try another search or turn off Saved kitchens.</p>';
 }
 
 function restaurantUrl(id) { return '/restaurant.html?id=' + encodeURIComponent(id); }
@@ -70,7 +70,7 @@ function renderRestaurantHeader() {
   const restaurant = currentRestaurant();
   if (!isRestaurantPage || !restaurant) return;
   const saved = experience.favorites.includes(restaurant.id);
-  $('#selected-restaurant').innerHTML = `<div class="restaurant-cover ${escapeHtml(restaurant.imageKey)}" aria-hidden="true"></div><div class="restaurant-heading"><div class="section-kicker">${escapeHtml(restaurant.cuisine)}</div><h1>${escapeHtml(restaurant.name)}</h1><p>${escapeHtml(restaurant.tagline)}</p><div class="restaurant-facts"><span>◷ &nbsp; About ${restaurant.prepMinutes} min prep</span><span>${experience.mode === 'pickup' ? '⌂ &nbsp; Free pickup' : '↗ &nbsp; $3.99 delivery · free at $30'}</span><span>Pay on arrival</span></div><button type="button" class="restaurant-save ${saved ? 'saved' : ''}" data-favorite="${escapeHtml(restaurant.id)}" aria-pressed="${saved}">${saved ? '♥ Saved kitchen' : '♡ Save this kitchen'}</button></div>`;
+  $('#selected-restaurant').innerHTML = `<div class="restaurant-cover ${escapeHtml(restaurant.imageKey)}" aria-hidden="true"></div><div class="restaurant-heading"><div class="section-kicker">${escapeHtml(restaurant.cuisine)}</div><h1>${escapeHtml(restaurant.name)}</h1>${ratingMarkup(restaurant.id)}<p>${escapeHtml(restaurant.tagline)}</p><div class="restaurant-facts"><span>◷ &nbsp; About ${restaurant.prepMinutes} min prep</span><span>${experience.mode === 'pickup' ? '⌂ &nbsp; Free pickup' : '↗ &nbsp; $3.99 delivery · free at $30'}</span><span>Pay on arrival</span></div><button type="button" class="restaurant-save ${saved ? 'saved' : ''}" data-favorite="${escapeHtml(restaurant.id)}" aria-pressed="${saved}">${saved ? '♥ Saved kitchen' : '♡ Save this kitchen'}</button></div>`;
   $('#restaurant-breadcrumb-name').textContent = restaurant.name;
   document.title = restaurant.name + ' menu | Crave';
 }
@@ -95,6 +95,7 @@ function showRestaurantUnavailable(message) {
 }
 
 function renderCart() {
+  if (typeof renderRecommendations === "function") renderRecommendations();
   const lines = cartLines();
   document.body.classList.toggle('has-bag',!!lines.length);
   $('#cart-count').textContent = count();
@@ -207,9 +208,10 @@ function mapMarkup(order) {
 function renderTrackedOrder(order) {
   const steps = order.fulfillment === 'delivery' ? ['Placed','Preparing','Ready','Out for delivery','Completed'] : ['Placed','Preparing','Ready','Completed'];
   const current = steps.indexOf(order.status);
-  const timeline = order.status === 'Cancelled' ? '<p class="order-cancelled">This order was cancelled.</p>' : `<div class="order-timeline">${steps.map((step, index) => `<span class="${index <= current ? 'done' : ''}">${escapeHtml(step)}</span>`).join('')}</div>`;
+  const timeline = progressMarkup(order);
   const canCancel = ['Placed','Preparing'].includes(order.status);
-  $('#track-result').innerHTML = `<div class="tracked-order"><div class="tracking-header"><span class="status">${escapeHtml(order.status)}</span><span class="tracking-code">#${escapeHtml(order.id)}</span></div><h3>${escapeHtml(order.restaurantName || restaurantName(order.restaurantId))}</h3><p>${escapeHtml(order.fulfillment === 'delivery' ? 'Delivery to ' + order.address : 'Pickup')} · Placed ${new Date(order.placedAt).toLocaleString()}</p>${timeline}${orderTiming(order)}${mapMarkup(order)}<div class="tracking-summary"><ul>${order.items.map(item => `<li>${item.quantity} × ${escapeHtml(item.name)}</li>`).join('')}</ul><div class="receipt-mini"><div><span>Food</span><span>${money(order.subtotal)}</span></div><div><span>Delivery</span><span>${money(order.deliveryFee)}</span></div>${order.discount ? `<div><span>Savings</span><span>−${money(order.discount)}</span></div>` : ''}<div><span>Tip</span><span>${money(order.tip || 0)}</span></div><strong>Total ${money(order.total)}</strong></div></div><button type="button" class="receipt-button" data-receipt>DOWNLOAD RECEIPT ↗</button>${canCancel ? '<button class="cancel-order-button" id="cancel-order" type="button">Cancel order</button><p class="cancel-note">You can cancel until your order is ready.</p>' : ''}<p class="form-message" id="cancel-message" role="alert"></p></div>`;
+  $('#track-result').innerHTML = `<div class="tracked-order"><div class="tracking-header"><span class="status">${escapeHtml(order.status)}</span><span class="tracking-code">#${escapeHtml(order.id)}</span></div><h3>${escapeHtml(order.restaurantName || restaurantName(order.restaurantId))}</h3><p>${escapeHtml(order.fulfillment === 'delivery' ? 'Delivery to ' + order.address : 'Pickup')} · Placed ${new Date(order.placedAt).toLocaleString()}</p>${timeline}<div id="track-preparation">${preparationMarkup(order)}</div>${mapMarkup(order)}<div class="tracking-summary"><ul>${order.items.map(item => `<li>${item.quantity} × ${escapeHtml(item.name)}</li>`).join('')}</ul><div class="receipt-mini"><div><span>Food</span><span>${money(order.subtotal)}</span></div><div><span>Delivery</span><span>${money(order.deliveryFee)}</span></div>${order.discount ? `<div><span>Savings</span><span>−${money(order.discount)}</span></div>` : ''}<div><span>Tip</span><span>${money(order.tip || 0)}</span></div><strong>Total ${money(order.total)}</strong></div></div><button type="button" class="receipt-button" data-receipt>DOWNLOAD RECEIPT ↗</button>${canCancel ? '<button class="cancel-order-button" id="cancel-order" type="button">Cancel order</button><p class="cancel-note">You can cancel until your order is ready.</p>' : ''}<p class="form-message" id="cancel-message" role="alert"></p></div>`;
+  renderReviewForm(order);
 }
 
 async function loadTrackedOrder(silent = false) {
@@ -223,6 +225,7 @@ async function loadTrackedOrder(silent = false) {
     if (!response.ok) throw new Error(response.status === 404 ? 'No order found with that code and email.' : 'Could not look up the order.');
     const order = await response.json();
     const changed = !trackedOrder || trackedOrder.id !== order.id || JSON.stringify([trackedOrder.status,trackedOrder.courierLocation]) !== JSON.stringify([order.status,order.courierLocation]);
+    notifyOrderChange(order);
     rememberOrder(order,email);
     trackedOrder = order;
     if (changed || !silent) renderTrackedOrder(order);
@@ -361,6 +364,7 @@ async function renderCheckoutTotals() {
   } catch (error) { if (version === quoteVersion) { $('#checkout-message').textContent = error.message || 'Unable to connect. Please try again.'; $('#checkout-total').textContent = 'Unavailable'; } }
 }
 function rememberOrder(order, email) {
+  if (typeof notifyOrderChange === "function") notifyOrderChange(order);
   const entry = {id:order.id,email,restaurantId:order.restaurantId,restaurantName:order.restaurantName || restaurantName(order.restaurantId),placedAt:order.placedAt,total:order.total,status:order.status,items:order.items};
   experience.history = [entry,...experience.history.filter(item => item.id !== order.id)].sort((a,b) => new Date(b.placedAt) - new Date(a.placedAt)).slice(0,20);
   persist('fork-flame-history',experience.history);

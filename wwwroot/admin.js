@@ -36,6 +36,7 @@ function selectTab(tab) {
   if (tab === 'orders') loadOrders();
   if (tab === 'restaurants') loadRestaurants();
   if (tab === 'menu') loadMenu();
+  if (tab === 'analytics') { setupAnalyticsFilters(); loadAnalytics(); }
 }
 
 function nextStatuses(order) {
