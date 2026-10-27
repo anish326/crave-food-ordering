@@ -80,7 +80,7 @@ function renderRestaurants() {
   $('#admin-restaurants-list').innerHTML = state.restaurants.length ? state.restaurants.map(restaurant => `<article class="admin-restaurant-row"><div class="admin-restaurant-photo ${safe(restaurant.imageKey)}"></div><div class="admin-restaurant-main"><span>${safe(restaurant.cuisine)}</span><h3>${safe(restaurant.name)}</h3><p>${safe(restaurant.tagline)} · About ${restaurant.prepMinutes} min prep</p></div><span class="availability ${restaurant.available ? '' : 'off'}">${restaurant.available ? 'ACCEPTING ORDERS' : 'PAUSED'}</span><div class="menu-row-actions"><button type="button" data-edit-restaurant="${safe(restaurant.id)}">Edit</button><button type="button" data-toggle-restaurant="${safe(restaurant.id)}">${restaurant.available ? 'Pause' : 'Resume'}</button></div></article>`).join('') : '<div class="empty-state">Add your first restaurant.</div>';
 }
 async function loadRestaurants() {
-  try { state.restaurants = await api('/api/admin/restaurants'); $('#restaurants-message').textContent = ''; renderRestaurants(); if (state.menu.length) renderMenu(); }
+  try { state.restaurants = await api('/api/admin/restaurants'); $('#restaurants-message').textContent = ''; renderRestaurants(); if (state.menu.length) renderMenu(); if (state.tab === 'analytics') setupAnalyticsFilters(); }
   catch (error) { $('#restaurants-message').textContent = error.message; }
 }
 function openRestaurantEditor(restaurant = null) {
